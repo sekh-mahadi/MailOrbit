@@ -22,7 +22,8 @@ spring:
       max-request-size: 25MB
 
 server:
-  port: 8090
+  # PORT is injected by container platforms (Render, Cloud Run); defaults to 8090 locally
+  port: ${PORT:8090}
   compression:
     enabled: true
 
