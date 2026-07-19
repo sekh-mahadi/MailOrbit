@@ -88,3 +88,7 @@ src/main/resources/
   samples/sample-contacts.csv demo list (typos, disposables, dupes, role accounts…)
   disposable-domains.txt
 ```
+
+## License
+
+Source-available for **portfolio review only** — all rights reserved. See [LICENSE](LICENSE) for details.
