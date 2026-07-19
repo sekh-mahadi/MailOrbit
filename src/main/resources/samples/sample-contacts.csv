@@ -1,0 +1,30 @@
+Email Address,First Name,Last Name,Company,Source
+jane.doe@microsoft.com,Jane,Doe,Microsoft,demo-inbound
+rahul.sharma@infosys.com,Rahul,Sharma,Infosys,demo-inbound
+li.wei@alibaba.com,Li,Wei,Alibaba,demo-webinar
+john.smith@gmail.com,John,Smith,Freelance,demo-newsletter
+JOHN.SMITH@Gmail.com,John,Smith,Freelance,demo-newsletter
+sarah.connor+news@gmail.com,Sarah,Connor,Cyberdyne,demo-newsletter
+sarah.connor@gmail.com,Sarah,Connor,Cyberdyne,demo-newsletter
+info@amazon.com,,,Amazon,demo-scrape-cleanup
+sales@salesforce.com,,,Salesforce,demo-scrape-cleanup
+support@zendesk.com,,,Zendesk,demo-scrape-cleanup
+test.user@mailinator.com,Test,User,,demo-signup
+throwaway@10minutemail.com,,,,demo-signup
+peter.parker@yopmail.com,Peter,Parker,Daily Bugle,demo-signup
+bad-email@@nowhere,Bad,Email,,demo-signup
+missing.domain@,Missing,Domain,,demo-signup
+,Empty,Row,,demo-signup
+someone@thisdomaindoesnotexist987654.com,Ghost,Domain,,demo-old-list
+old.contact@nonexistent-company-xyz321.net,Old,Contact,,demo-old-list
+maria.garcia@gmial.com,Maria,Garcia,,demo-typo
+david.jones@hotmial.com,David,Jones,,demo-typo
+noreply@github.com,,,GitHub,demo-scrape-cleanup
+donotreply@paypal.com,,,PayPal,demo-scrape-cleanup
+grants.office@stanford.edu,Grants,Office,Stanford University,demo-institutional
+emma.wilson@yahoo.com,Emma,Wilson,,demo-newsletter
+oliver.brown@outlook.com,Oliver,Brown,,demo-newsletter
+"Ava Miller <ava.miller@apple.com>",Ava,Miller,Apple,demo-crm-export
+lucas.martin@protonmail.com,Lucas,Martin,,demo-newsletter
+sophia.lee@salesforce.com,Sophia,Lee,Salesforce,demo-webinar
+unsubscribed.user@example.com,Unsub,User,,demo-old-list

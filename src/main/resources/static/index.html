@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MailOrbit — List Hygiene Center</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📬</text></svg>">
+<style>
+  :root {
+    color-scheme: light;
+    --page:           #f9f9f7;
+    --surface:        #fcfcfb;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --muted:          #898781;
+    --grid:           #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #2a78d6;
+    --accent-soft:    rgba(42,120,214,0.10);
+    --good:           #0ca30c;
+    --good-text:      #006300;
+    --warning:        #fab219;
+    --serious:        #ec835a;
+    --critical:       #d03b3b;
+    --shadow:         0 1px 2px rgba(11,11,11,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page:           #0d0d0d;
+      --surface:        #1a1a19;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --muted:          #898781;
+      --grid:           #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --accent:         #3987e5;
+      --accent-soft:    rgba(57,135,229,0.14);
+      --good-text:      #0ca30c;
+      --shadow:         none;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:           #0d0d0d;
+    --surface:        #1a1a19;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --muted:          #898781;
+    --grid:           #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --accent:         #3987e5;
+    --accent-soft:    rgba(57,135,229,0.14);
+    --good-text:      #0ca30c;
+    --shadow:         none;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  input, select { font: inherit; color: var(--text-primary); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* ---------- sidebar ---------- */
+  .sidebar {
+    width: 212px; flex: 0 0 212px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 18px 12px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 18px; }
+  .brand-mark { font-size: 22px; }
+  .brand-name { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+  .brand-name span { color: var(--accent); }
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav button {
+    display: flex; align-items: center; gap: 10px; text-align: left;
+    padding: 8px 10px; border-radius: 8px;
+    color: var(--text-secondary); font-weight: 500;
+  }
+  .nav button:hover { background: var(--accent-soft); }
+  .nav button.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar-foot { margin-top: auto; padding: 10px 8px 0; font-size: 11.5px; color: var(--muted); }
+
+  /* ---------- main ---------- */
+  .main { flex: 1; min-width: 0; padding: 22px 28px 60px; }
+  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .topbar h1 { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; margin-right: auto; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 13px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-weight: 550; box-shadow: var(--shadow);
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.07); color: #fff; }
+  .btn:disabled { opacity: 0.5; pointer-events: none; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow);
+    padding: 16px 18px; margin-bottom: 18px;
+  }
+  .panel h2 { font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: 12px; }
+
+  /* stat cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow); padding: 14px 16px;
+  }
+  .card .k { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+  .card .v { font-size: 24px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .card.valid .v { color: var(--good-text); }
+  .card.risky .v { color: var(--warning); }
+  .card.invalid .v { color: var(--critical); }
+  .card.suppressed .v { color: var(--serious); }
+
+  /* progress */
+  .progress-wrap { display: none; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .progress-wrap.on { display: flex; }
+  .progress { flex: 1; height: 8px; border-radius: 99px; background: var(--grid); overflow: hidden; }
+  .progress > div { height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+  .progress-label { font-size: 12.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* tables */
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px; padding: 7px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.email { font-weight: 550; white-space: nowrap; }
+  td.reasons { color: var(--text-secondary); font-size: 12px; max-width: 380px; }
+  .mono { font-variant-numeric: tabular-nums; }
+
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 99px;
+    font-size: 11px; font-weight: 650; letter-spacing: 0.03em;
+  }
+  .badge.VALID      { background: rgba(12,163,12,0.13);  color: var(--good-text); }
+  .badge.RISKY      { background: rgba(250,178,25,0.16); color: #8a6103; }
+  .badge.INVALID    { background: rgba(208,59,59,0.13);  color: var(--critical); }
+  .badge.SUPPRESSED { background: rgba(236,131,90,0.16); color: var(--serious); }
+  .badge.NEW        { background: var(--accent-soft);    color: var(--accent); }
+  :root[data-theme="dark"] .badge.RISKY { color: var(--warning); }
+  @media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .badge.RISKY { color: var(--warning); } }
+
+  .scorebar { display: inline-block; width: 54px; height: 6px; border-radius: 99px; background: var(--grid); vertical-align: middle; margin-right: 6px; overflow: hidden; }
+  .scorebar > i { display: block; height: 100%; border-radius: 99px; }
+
+  /* controls row */
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .controls input[type="text"], .controls select, .field {
+    padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--page); min-width: 0;
+  }
+  .controls input[type="text"] { width: 220px; }
+  .pager { display: flex; gap: 6px; align-items: center; margin-left: auto; font-size: 12.5px; color: var(--text-secondary); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .empty { color: var(--muted); padding: 18px 4px; text-align: center; }
+
+  .icon-btn { padding: 3px 8px; border-radius: 6px; color: var(--muted); }
+  .icon-btn:hover { color: var(--critical); background: rgba(208,59,59,0.08); }
+
+  /* toast */
+  #toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text-primary); color: var(--page);
+    padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 550;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; z-index: 50;
+    max-width: 80vw;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  code { background: var(--accent-soft); padding: 1px 5px; border-radius: 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">📬</div>
+      <div class="brand-name">Mail<span>Orbit</span></div>
+    </div>
+    <nav class="nav">
+      <button data-view="overview" class="active">▦ Overview</button>
+      <button data-view="contacts">✉ Contacts</button>
+      <button data-view="suppressions">⛔ Suppressions</button>
+      <button data-view="rules">⚙ Groovy Rules</button>
+    </nav>
+    <div class="sidebar-foot">
+      Verify only lists you have a lawful basis to contact (opt-ins, licensed data, existing customers). MailOrbit cleans lists — it doesn't harvest them.
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 id="viewTitle">Overview</h1>
+      <button class="btn" id="btnSample">Load sample list</button>
+      <button class="btn" id="btnUpload">Upload CSV</button>
+      <input type="file" id="fileInput" accept=".csv,text/csv" hidden>
+      <button class="btn primary" id="btnVerify">▶ Run verification</button>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress"><div id="progressBar"></div></div>
+      <div class="progress-label" id="progressLabel">0 / 0</div>
+    </div>
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="view active" id="view-overview">
+      <div class="cards">
+        <div class="card"><div class="k">Total contacts</div><div class="v" id="stTotal">—</div></div>
+        <div class="card valid"><div class="k">Valid</div><div class="v" id="stValid">—</div></div>
+        <div class="card risky"><div class="k">Risky</div><div class="v" id="stRisky">—</div></div>
+        <div class="card invalid"><div class="k">Invalid</div><div class="v" id="stInvalid">—</div></div>
+        <div class="card suppressed"><div class="k">Suppressed</div><div class="v" id="stSuppressed">—</div></div>
+        <div class="card"><div class="k">Unverified</div><div class="v" id="stNew">—</div></div>
+        <div class="card"><div class="k">Avg score</div><div class="v" id="stAvg">—</div></div>
+      </div>
+
+      <div class="panel">
+        <h2>Export</h2>
+        <div class="controls" style="margin-bottom:0">
+          <a class="btn" href="/api/contacts/export?status=VALID">⬇ Valid only</a>
+          <a class="btn" href="/api/contacts/export?status=RISKY">⬇ Risky</a>
+          <a class="btn" href="/api/contacts/export?status=ALL">⬇ Everything</a>
+        </div>
+        <div class="note">Exports include status, score and the reasons each address was kept or rejected.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Top domains</h2>
+        <div class="table-scroll"><table id="tblDomains"><thead><tr><th>Domain</th><th>Contacts</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="panel">
+        <h2>Import batches</h2>
+        <div class="table-scroll"><table id="tblBatches">
+          <thead><tr><th>#</th><th>File</th><th>Rows</th><th>Imported</th><th>Duplicates</th><th>Unparseable</th><th>When</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ============ CONTACTS ============ -->
+    <section class="view" id="view-contacts">
+      <div class="panel">
+        <div class="controls">
+          <select id="fltStatus">
+            <option value="">All statuses</option>
+            <option>NEW</option><option>VALID</option><option>RISKY</option>
+            <option>INVALID</option><option>SUPPRESSED</option>
+          </select>
+          <input type="text" id="fltQ" placeholder="Search email…">
+          <div class="pager">
+            <button class="btn" id="pgPrev">‹</button>
+            <span id="pgInfo">–</span>
+            <button class="btn" id="pgNext">›</button>
+          </div>
+        </div>
+        <div class="table-scroll"><table id="tblContacts">
+          <thead><tr>
+            <th>Email</th><th>Name</th><th>Company</th><th>Status</th><th>Score</th><th>Reasons</th><th>Source</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="empty" id="contactsEmpty" style="display:none">No contacts yet — load the sample list or upload a CSV.</div>
+      </div>
+    </section>
+
+    <!-- ============ SUPPRESSIONS ============ -->
+    <section class="view" id="view-suppressions">
+      <div class="panel">
+        <h2>Add entry</h2>
+        <div class="controls" style="margin-bottom:0">
+          <input type="text" class="field" id="supPattern" placeholder="email or domain (e.g. example.com)" style="width:280px">
+          <input type="text" class="field" id="supReason" placeholder="reason (optional)" style="width:220px">
+          <button class="btn primary" id="btnAddSup">Add</button>
+        </div>
+        <div class="note">Suppressed addresses/domains are excluded during verification — unsubscribes, complaints, do-not-contact requests.</div>
+      </div>
+      <div class="panel">
+        <h2>Suppression list</h2>
+        <div class="table-scroll"><table id="tblSup">
+          <thead><tr><th>Pattern</th><th>Reason</th><th>Added</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="empty" id="supEmpty" style="display:none">Suppression list is empty.</div>
+      </div>
+    </section>
+
+    <!-- ============ RULES ============ -->
+    <section class="view" id="view-rules">
+      <div class="panel">
+        <div class="controls">
+          <h2 style="margin:0;margin-right:auto">Loaded Groovy rules</h2>
+          <button class="btn" id="btnReloadRules">↻ Reload from disk</button>
+        </div>
+        <div class="table-scroll"><table id="tblRules">
+          <thead><tr><th>Rule</th><th>Description</th><th>File</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="note">
+          Drop <code>.groovy</code> files into the <code>rules/</code> directory and reload — each returns
+          <code>[name:, description:, apply: { contact -> [scoreDelta:, reason:, fatal:] }]</code>.
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => (s ?? "").toString().replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 3200);
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || res.status + " " + res.statusText);
+  return body;
+}
+
+/* ---------- navigation ---------- */
+const titles = { overview: "Overview", contacts: "Contacts", suppressions: "Suppressions", rules: "Groovy Rules" };
+document.querySelectorAll(".nav button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b === btn));
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    $("#view-" + btn.dataset.view).classList.add("active");
+    $("#viewTitle").textContent = titles[btn.dataset.view];
+    if (btn.dataset.view === "contacts") loadContacts();
+    if (btn.dataset.view === "suppressions") loadSuppressions();
+    if (btn.dataset.view === "rules") loadRules();
+    if (btn.dataset.view === "overview") loadStats();
+  });
+});
+
+/* ---------- overview ---------- */
+async function loadStats() {
+  try {
+    const s = await api("/api/stats");
+    $("#stTotal").textContent = s.total;
+    $("#stValid").textContent = s.byStatus.VALID;
+    $("#stRisky").textContent = s.byStatus.RISKY;
+    $("#stInvalid").textContent = s.byStatus.INVALID;
+    $("#stSuppressed").textContent = s.byStatus.SUPPRESSED;
+    $("#stNew").textContent = s.byStatus.NEW;
+    $("#stAvg").textContent = s.avgScore ?? "—";
+    $("#tblDomains tbody").innerHTML = (s.topDomains || []).map(d =>
+      `<tr><td>${esc(d.domain)}</td><td class="mono">${d.count}</td></tr>`).join("") ||
+      `<tr><td colspan="2" class="empty">No data yet</td></tr>`;
+    const batches = await api("/api/imports");
+    $("#tblBatches tbody").innerHTML = batches.map(b =>
+      `<tr><td class="mono">${b.id}</td><td>${esc(b.fileName)}</td><td class="mono">${b.totalRows}</td>
+       <td class="mono">${b.imported}</td><td class="mono">${b.duplicates}</td><td class="mono">${b.unparseable}</td>
+       <td>${(b.createdAt || "").replace("T", " ").slice(0, 19)}</td></tr>`).join("") ||
+      `<tr><td colspan="7" class="empty">No imports yet</td></tr>`;
+  } catch (e) { toast("Stats failed: " + e.message); }
+}
+
+/* ---------- contacts ---------- */
+let page = 0, totalPages = 0;
+function scoreColor(score) {
+  if (score == null) return "var(--baseline)";
+  if (score >= 80) return "var(--good)";
+  if (score >= 50) return "var(--warning)";
+  return "var(--critical)";
+}
+async function loadContacts() {
+  const status = $("#fltStatus").value;
+  const q = $("#fltQ").value.trim();
+  try {
+    const data = await api(`/api/contacts?page=${page}&size=25&status=${encodeURIComponent(status)}&q=${encodeURIComponent(q)}`);
+    totalPages = data.totalPages;
+    if (page >= totalPages && totalPages > 0) { page = totalPages - 1; return loadContacts(); }
+    $("#pgInfo").textContent = data.totalElements === 0 ? "0" : `${data.page + 1} / ${data.totalPages} (${data.totalElements})`;
+    const rows = data.content.map(c => `
+      <tr>
+        <td class="email">${esc(c.email)}</td>
+        <td>${esc([c.firstName, c.lastName].filter(Boolean).join(" "))}</td>
+        <td>${esc(c.company)}</td>
+        <td><span class="badge ${c.status}">${c.status}</span></td>
+        <td class="mono">${c.score == null ? "—" :
+          `<span class="scorebar"><i style="width:${c.score}%;background:${scoreColor(c.score)}"></i></span>${c.score}`}</td>
+        <td class="reasons">${esc(c.reasons)}</td>
+        <td>${esc(c.source)}</td>
+        <td><button class="icon-btn" onclick="delContact(${c.id})" title="Delete">✕</button></td>
+      </tr>`).join("");
+    $("#tblContacts tbody").innerHTML = rows;
+    $("#contactsEmpty").style.display = rows ? "none" : "";
+  } catch (e) { toast("Contacts failed: " + e.message); }
+}
+async function delContact(id) {
+  try { await api("/api/contacts/" + id, { method: "DELETE" }); loadContacts(); loadStats(); }
+  catch (e) { toast(e.message); }
+}
+$("#fltStatus").addEventListener("change", () => { page = 0; loadContacts(); });
+let qTimer;
+$("#fltQ").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { page = 0; loadContacts(); }, 300); });
+$("#pgPrev").addEventListener("click", () => { if (page > 0) { page--; loadContacts(); } });
+$("#pgNext").addEventListener("click", () => { if (page + 1 < totalPages) { page++; loadContacts(); } });
+
+/* ---------- import ---------- */
+$("#btnSample").addEventListener("click", async () => {
+  try {
+    const b = await api("/api/imports/sample", { method: "POST" });
+    toast(`Sample loaded: ${b.imported} new, ${b.duplicates} duplicates, ${b.unparseable} unparseable`);
+    loadStats(); loadContacts();
+  } catch (e) { toast(e.message); }
+});
+$("#btnUpload").addEventListener("click", () => $("#fileInput").click());
+$("#fileInput").addEventListener("change", async () => {
+  const file = $("#fileInput").files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append("file", file);
+  try {
+    const b = await api("/api/imports", { method: "POST", body: fd });
+    toast(`Imported ${esc(b.fileName)}: ${b.imported} new, ${b.duplicates} duplicates, ${b.unparseable} unparseable`);
+    loadStats(); loadContacts();
+  } catch (e) { toast("Import failed: " + e.message); }
+  $("#fileInput").value = "";
+});
+
+/* ---------- verify ---------- */
+let polling = null;
+$("#btnVerify").addEventListener("click", async () => {
+  try {
+    const job = await api("/api/verify?scope=all", { method: "POST" });
+    $("#btnVerify").disabled = true;
+    $("#progressWrap").classList.add("on");
+    pollJob(job.id);
+  } catch (e) { toast(e.message); }
+});
+function pollJob(id) {
+  clearInterval(polling);
+  polling = setInterval(async () => {
+    try {
+      const j = await api("/api/verify/" + id);
+      const pct = j.total ? Math.round(100 * j.processed / j.total) : 0;
+      $("#progressBar").style.width = pct + "%";
+      $("#progressLabel").textContent = `${j.processed} / ${j.total}`;
+      if (j.status === "COMPLETED" || j.status === "FAILED") {
+        clearInterval(polling);
+        $("#btnVerify").disabled = false;
+        setTimeout(() => $("#progressWrap").classList.remove("on"), 800);
+        toast(j.status === "COMPLETED" ? `Verification finished: ${j.total} contacts checked` : "Verification failed: " + j.error);
+        loadStats(); loadContacts();
+      }
+    } catch (e) { clearInterval(polling); $("#btnVerify").disabled = false; }
+  }, 700);
+}
+
+/* ---------- suppressions ---------- */
+async function loadSuppressions() {
+  try {
+    const list = await api("/api/suppressions");
+    const rows = list.map(s => `
+      <tr><td class="email">${esc(s.pattern)}</td><td>${esc(s.reason)}</td>
+      <td>${(s.createdAt || "").replace("T", " ").slice(0, 19)}</td>
+      <td><button class="icon-btn" onclick="delSup(${s.id})" title="Remove">✕</button></td></tr>`).join("");
+    $("#tblSup tbody").innerHTML = rows;
+    $("#supEmpty").style.display = rows ? "none" : "";
+  } catch (e) { toast(e.message); }
+}
+async function delSup(id) {
+  try { await api("/api/suppressions/" + id, { method: "DELETE" }); loadSuppressions(); }
+  catch (e) { toast(e.message); }
+}
+$("#btnAddSup").addEventListener("click", async () => {
+  const pattern = $("#supPattern").value.trim();
+  if (!pattern) return toast("Enter an email or domain");
+  try {
+    await api("/api/suppressions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pattern, reason: $("#supReason").value.trim() || null })
+    });
+    $("#supPattern").value = ""; $("#supReason").value = "";
+    loadSuppressions();
+    toast("Added to suppression list — re-run verification to apply");
+  } catch (e) { toast(e.message); }
+});
+
+/* ---------- rules ---------- */
+async function loadRules() {
+  try {
+    const rules = await api("/api/rules");
+    $("#tblRules tbody").innerHTML = rules.map(r =>
+      `<tr><td class="email">${esc(r.name)}</td><td>${esc(r.description)}</td><td><code>${esc(r.file)}</code></td></tr>`).join("") ||
+      `<tr><td colspan="3" class="empty">No rules loaded</td></tr>`;
+  } catch (e) { toast(e.message); }
+}
+$("#btnReloadRules").addEventListener("click", async () => {
+  try {
+    const r = await api("/api/rules/reload", { method: "POST" });
+    toast(`Reloaded ${r.loaded} rules`);
+    loadRules();
+  } catch (e) { toast(e.message); }
+});
+
+loadStats();
+</script>
+</body>
+</html>

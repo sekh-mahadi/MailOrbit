@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: MailOrbit
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mailorbit
+    username: postgres
+    password: your_password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  threads:
+    virtual:
+      enabled: true
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+server:
+  port: 8090
+  compression:
+    enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.mailorbit: DEBUG
+
+mailorbit:
+  # Groovy verification rules, loaded at runtime from this directory
+  rules:
+    dir: ${RULES_DIR:rules}
+  verify:
+    threads: ${VERIFY_THREADS:16}
+    mx-timeout-ms: ${MX_TIMEOUT_MS:3000}
+
+info:
+  app:
+    name: MailOrbit
+    version: 1.0.0
+    description: Email List Verification & Hygiene Platform
+    java: 25
+    springboot: 4.1.0
+
+---
+# Local/demo profile: runs on in-memory H2, no PostgreSQL needed
+# Run: java -jar target/mailorbit-1.0.0.jar --spring.profiles.active=local
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:mem:mailorbit;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
